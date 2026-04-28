@@ -1,0 +1,88 @@
+#include <unistd.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "list/list.h"
+#include "user.h"
+
+#define PORT_FREESCORD 4321
+
+/** Gérer toutes les communications avec le client renseigné dans
+ * user, qui doit être l'adresse d'une struct user */
+void *handle_client(void *user);
+/** Créer et configurer une socket d'écoute sur le port donné en argument
+ * retourne le descripteur de cette socket, ou -1 en cas d'erreur */
+int create_listening_sock(uint16_t port);
+
+int main(int argc, char *argv[])
+{	
+	int sock_l = create_listening_sock(PORT_FREESCORD);
+	if (sock_l < 0) return 1;
+	//boucle infini
+	while(1){
+		//struct pour garder addr ip et port du client 
+		struct sockaddr_in sa_clt;
+		socklen_t sl = sizeof(sa_clt);
+		int s = accept(sock_l, (struct sockaddr *) &sa_clt, &sl);
+		if (s<0){
+			perror("erreur durant accept");
+			continue;
+		}
+		char buf[256];
+		int n;
+		//lecture 
+		while ((n = read(s,buf,sizeof(buf)))>0){
+			//écriture
+			write(s, buf, n);
+		}
+		close(s);
+		
+	}
+
+
+	return 0;
+}
+
+void *handle_client(void *clt)
+{
+	return clt;
+}
+
+
+
+
+
+
+
+
+/** Créer et configurer une socket découte sur le port donné en argument
+    * retourne le descripteur de cette socket, ou -1 en cas derreur */
+
+int create_listening_sock(uint16_t port)
+{   //création du socket
+	int sock_l = socket(AF_INET,SOCK_STREAM,0);
+	if (sock_l <0) {
+		perror("erreur socket");
+		return -1;
+	}
+	struct sockaddr_in sa = { .sin_family = AF_INET , .sin_port = htons(port),.sin_addr.s_addr = htonl(INADDR_ANY)};
+	socklen_t sl = sizeof(sa);
+	int opt = 1;
+	//pour faie en sorte que l'on puisse réutiliser l'adr sans attendre la fin du serveur
+	setsockopt(sock_l,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(int));
+	if (bind(sock_l,(struct sockaddr *) &sa, sl)<0)	{
+		perror("erreur bind");
+		return -1;
+	}
+	if (listen(sock_l,128)<0){
+		perror("pb listen");
+		return -1;
+	}
+	return sock_l;
+}
+
+
