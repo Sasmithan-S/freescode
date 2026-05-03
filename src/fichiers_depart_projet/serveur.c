@@ -24,6 +24,21 @@ int main(int argc, char *argv[])
 	if (sock_l < 0) return 1;
 	//boucle infini
 	while(1){
+
+		struct user* cl =  user_accept(sock_l);
+		if (cl == NULL){
+			continue;
+		}
+		char buf[256];
+		int n;
+		while((n = read(cl->sock, buf,sizeof(buf)))>0){
+			write(cl->sock,buf,n);
+		}
+		close(cl->sock);
+		user_free(cl);
+
+
+		/** 
 		//struct pour garder addr ip et port du client 
 		struct sockaddr_in sa_clt;
 		socklen_t sl = sizeof(sa_clt);
@@ -40,16 +55,27 @@ int main(int argc, char *argv[])
 			write(s, buf, n);
 		}
 		close(s);
-		
+		*/
 	}
 
 
 	return 0;
 }
 
+/** Gérer toutes les communications avec le client renseigné dans
+    * user, qui doit être ladresse dune struct user */
 void *handle_client(void *clt)
 {
-	return clt;
+	struct user *client = (struct user *)clt;
+	char buf[256];
+	int n;
+	while((n=read(client->sock,buf,sizeof(buf)))){
+		write(client->sock,buf,n);
+	}
+	close(client->sock);
+	user_free(client);
+	return NULL;
+
 }
 
 

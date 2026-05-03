@@ -8,15 +8,31 @@
  * pointeur vers un struct user, dynamiquement alloué et convenablement
  * initialisé */
 struct user *user_accept(int sl)
-{
-	/* pour éviter les warnings de variable non utilisée */
-	sl = 0;
-	return NULL;
+{	struct user* nc  = malloc(sizeof(struct user));
+	if (nc == NULL){
+		return NULL;
+	}
+	nc->address = malloc (sizeof(struct sockaddr_in));
+	if (nc->address == NULL){
+		free(nc);
+		return NULL;
+	}	
+	nc->addr_len = sizeof(struct sockaddr_in);
+	int s = accept(sl, (struct sockaddr*)nc->address,&nc->addr_len);
+	if (s<0){
+		perror("erreur acceptation user");
+		free(nc->address);
+		free(nc);
+		return NULL;	
+	}
+	nc->sock = s;
+	return nc;
 }
 
 /** libérer toute la mémoire associée à user */
 void user_free(struct user *user)
-{
-	/* pour éviter les warnings de variable non utilisée */
-	user = NULL;
+{	if (user != NULL){
+	free(user->address);
+	free(user);	
+	}
 }
