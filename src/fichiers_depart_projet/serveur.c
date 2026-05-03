@@ -36,24 +36,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		/** 
-		//struct pour garder addr ip et port du client 
-		struct sockaddr_in sa_clt;
-		socklen_t sl = sizeof(sa_clt);
-		int s = accept(sock_l, (struct sockaddr *) &sa_clt, &sl);
-		if (s<0){
-			perror("erreur durant accept");
-			continue;
-		}
-		char buf[256];
-		int n;
-		//lecture 
-		while ((n = read(s,buf,sizeof(buf)))>0){
-			//écriture
-			write(s, buf, n);
-		}
-		close(s);
-		*/
+
 	pthread_detach(t);
 	}
 
