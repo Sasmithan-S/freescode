@@ -29,14 +29,12 @@ int main(int argc, char *argv[])
 		if (cl == NULL){
 			continue;
 		}
-		char buf[256];
-		int n;
-		while((n = read(cl->sock, buf,sizeof(buf)))>0){
-			write(cl->sock,buf,n);
+		pthread_t t;
+		if (pthread_create(&t,NULL,handle_client,cl)!=0){
+			perror("erreur threads");
+			user_free(cl);
+			continue;
 		}
-		close(cl->sock);
-		user_free(cl);
-
 
 		/** 
 		//struct pour garder addr ip et port du client 
@@ -56,6 +54,7 @@ int main(int argc, char *argv[])
 		}
 		close(s);
 		*/
+	pthread_detach(t);
 	}
 
 
@@ -69,7 +68,7 @@ void *handle_client(void *clt)
 	struct user *client = (struct user *)clt;
 	char buf[256];
 	int n;
-	while((n=read(client->sock,buf,sizeof(buf)))){
+	while((n=read(client->sock,buf,sizeof(buf)))>0){
 		write(client->sock,buf,n);
 	}
 	close(client->sock);
