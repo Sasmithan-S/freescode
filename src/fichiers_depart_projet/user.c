@@ -21,8 +21,7 @@ struct user *user_accept(int sl)
 	int s = accept(sl, (struct sockaddr*)nc->address,&nc->addr_len);
 	if (s<0){
 		perror("erreur acceptation user");
-		free(nc->address);
-		free(nc);
+		user_free(nc);
 		return NULL;	
 	}
 	nc->sock = s;
