@@ -28,26 +28,45 @@ int main(int argc, char *argv[])
 	if (sock_cl <0) {
 		return 1;
 	}
-	int n;
-	char buf[256];
-	//lecture entrée terminal
-	while ((n=read(0,buf,sizeof(buf)))>0){
-		int nbOctetLus;
-		write(sock_cl,buf,n);
-		nbOctetLus = read(sock_cl,buf,sizeof(buf));
-		if (nbOctetLus > 0){
-			write(1,buf,nbOctetLus);
 
+	struct pollfd fds[2];
+	fds[0].fd = 0;
+	fds[1].fd = sock_cl;
+	fds[0].events = POLLIN;
+	fds[1].events = POLLIN;
+
+	while (poll(fds,2,-1)>0){
+		char buf[256];
+		int n;
+		//utilisateur
+		if(fds[0].revents & (POLLIN )){
+				if((n = read(0, buf,sizeof(buf)))>0){
+					write(sock_cl,buf,n);
+				}
+				else {
+					break;
+				}
 		}
-		else {
-			printf("erreur lecture serv");
-			break;
+		//serv
+		if (fds[1].revents & (POLLIN)){
+			if ((n=read(sock_cl,buf,sizeof(buf))) >0)	{
+				write(1,buf,n);
+			} else {
+				printf(" serv deco ");
+				break;
+			}
 		}
 	}
-
 	close(sock_cl);
 	return 0;
 }
+
+
+
+
+
+
+
 
 int connect_serveur_tcp(char *adresse, uint16_t port)
 {	
@@ -61,7 +80,7 @@ int connect_serveur_tcp(char *adresse, uint16_t port)
 	if (inet_pton(AF_INET, adresse, &sa.sin_addr) != 1){
 		perror ("erreur ip");
 		return -1;
-
+ 
 	}
 	socklen_t sl = sizeof(sa);
 	if (connect(sock, (struct sockaddr *) &sa,sl ) < 0){

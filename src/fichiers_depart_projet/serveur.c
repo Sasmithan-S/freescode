@@ -18,10 +18,23 @@ void *handle_client(void *user);
  * retourne le descripteur de cette socket, ou -1 en cas d'erreur */
 int create_listening_sock(uint16_t port);
 
+
+void *repeteur(void * t);
+int tube[2];
+struct list *liste_clt;
 int main(int argc, char *argv[])
 {	
 	int sock_l = create_listening_sock(PORT_FREESCORD);
 	if (sock_l < 0) return 1;
+	if (pipe(tube)<0){
+		perror("errur tube");
+		return 1;
+	}
+	liste_clt = list_create();
+	pthread_t rep_t;
+	if (pthread_create(&rep_t,NULL,repeteur,NULL)!=0) return 1;
+	pthread_detach(rep_t);
+	
 	//boucle infini
 	while(1){
 
@@ -44,17 +57,40 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+
+/**  Il est en lecture sur le tube, puis, chaque
+fois qu’il lit des octets dans le tube, les réécrit dans toutes les sockets de tous les utilisateurs.
+*/
+void *repeteur(void*t){
+	int n;
+	char buf[256];
+	while((n=read(tube[0],buf,sizeof(buf)))>0){
+		struct node *tmp = liste_clt->first;
+		while(tmp!=NULL){
+			struct user* c = (struct user*)tmp->elt;
+			write(c->sock,buf,n);
+			tmp=tmp->next;
+		}
+	}
+	return NULL;
+}
+
+
+
+
 /** Gérer toutes les communications avec le client renseigné dans
     * user, qui doit être ladresse dune struct user */
 void *handle_client(void *clt)
 {
 	struct user *client = (struct user *)clt;
+	list_add(liste_clt,client);
 	char buf[256];
 	int n;
 	while((n=read(client->sock,buf,sizeof(buf)))>0){
-		write(client->sock,buf,n);
+		write(tube[1],buf,n);
 	}
 	close(client->sock);
+	list_remove_element(liste_clt,client);
 	user_free(client);
 	return NULL;
 
