@@ -29,17 +29,16 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	struct pollfd fds[2];
-	fds[0].fd = 0;
-	fds[1].fd = sock_cl;
-	fds[0].events = POLLIN;
-	fds[1].events = POLLIN;
-
+	struct pollfd fds[2] = {
+		{.fd = 0 , .events = POLLIN},
+		{.fd = sock_cl, .events = POLLIN }
+	};
+	
 	while (poll(fds,2,-1)>0){
 		char buf[256];
-		int n;
+		ssize_t n;
 		//utilisateur
-		if(fds[0].revents & (POLLIN )){
+		if(fds[0].revents & (POLLIN | POLLHUP )){
 				if((n = read(0, buf,sizeof(buf)))>0){
 					write(sock_cl,buf,n);
 				}
@@ -48,7 +47,7 @@ int main(int argc, char *argv[])
 				}
 		}
 		//serv
-		if (fds[1].revents & (POLLIN)){
+		if (fds[1].revents & (POLLIN | POLLHUP)){
 			if ((n=read(sock_cl,buf,sizeof(buf))) >0)	{
 				write(1,buf,n);
 			} else {

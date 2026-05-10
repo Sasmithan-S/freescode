@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 fois qu’il lit des octets dans le tube, les réécrit dans toutes les sockets de tous les utilisateurs.
 */
 void *repeteur(void*t){
-	int n;
+	ssize_t n;
 	char buf[256];
 	while((n=read(tube[0],buf,sizeof(buf)))>0){
 		struct node *tmp = liste_clt->first;
@@ -85,7 +85,7 @@ void *handle_client(void *clt)
 	struct user *client = (struct user *)clt;
 	list_add(liste_clt,client);
 	char buf[256];
-	int n;
+	ssize_t n;
 	while((n=read(client->sock,buf,sizeof(buf)))>0){
 		write(tube[1],buf,n);
 	}
