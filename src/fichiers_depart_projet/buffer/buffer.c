@@ -1,3 +1,7 @@
+/* Sasmithan Satkunarajah 12403246
+        Je déclare quil sagit de mon propre travail.
+        Ce travail a été réalisé intégralement par un être humain. */
+
 #include "buffer.h"
 
 #include <fcntl.h>

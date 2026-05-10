@@ -1,3 +1,7 @@
+/* Sasmithan Satkunarajah 12403246
+        Je déclare quil sagit de mon propre travail.
+        Ce travail a été réalisé intégralement par un être humain. */
+
 #include "user.h"
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +16,7 @@ struct user *user_accept(int sl)
 	if (nc == NULL){
 		return NULL;
 	}
+	nc->b = NULL;
 	nc->address = malloc (sizeof(struct sockaddr_in));
 	if (nc->address == NULL){
 		free(nc);
@@ -25,13 +30,21 @@ struct user *user_accept(int sl)
 		return NULL;	
 	}
 	nc->sock = s;
+	nc->b = buff_create(s,512);
+	if(nc->b == NULL){
+		perror("erreur creation. buff ");
+		user_free(nc);
+		return NULL;
+	}
 	return nc;
 }
 
 /** libérer toute la mémoire associée à user */
 void user_free(struct user *user)
-{	if (user != NULL){
-	free(user->address);
+{	
+	if (user != NULL){
+		buff_free(user->b);
+	 	free(user->address);
 	free(user);	
 	}
 }
