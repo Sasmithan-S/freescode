@@ -8,7 +8,7 @@
 #include <poll.h>
 #include "buffer/buffer.h"
 #include "utils.h"
-
+#include <string.h>
 #define PORT_FREESCORD 4321
 
 /** se connecter au serveur TCP d'adresse donnée en argument sous forme de
@@ -33,29 +33,51 @@ int main(int argc, char *argv[])
 		{.fd = 0 , .events = POLLIN},
 		{.fd = sock_cl, .events = POLLIN }
 	};
-	
-	while (poll(fds,2,-1)>0){
-		char buf[256];
+	buffer * b = buff_create(sock_cl,512);
+	if(b == NULL){
+		printf("erreur creation buffer");
+		close(sock_cl);
+		return 1;
+	}
+	while (1){
+
+		if (buff_ready(b)){
+			fds[0].revents = 0;
+			fds[1].revents = 0;
+
+		} else { if (poll(fds,2,-1)<=0){
+			printf("erreur/fin poll");
+			break;
+		}
+		
+		}
+		char t[512];
 		ssize_t n;
 		//utilisateur
 		if(fds[0].revents & (POLLIN | POLLHUP )){
-				if((n = read(0, buf,sizeof(buf)))>0){
-					write(sock_cl,buf,n);
+				if((n = read(0, t,sizeof(t)-2))>0){
+					t[n]= '\0';
+					lf_to_crlf(t);
+					write(sock_cl,t,strlen(t));
 				}
 				else {
 					break;
 				}
 		}
 		//serv
-		if (fds[1].revents & (POLLIN | POLLHUP)){
-			if ((n=read(sock_cl,buf,sizeof(buf))) >0)	{
-				write(1,buf,n);
-			} else {
-				printf(" serv deco ");
-				break;
+		if (fds[1].revents & (POLLIN | POLLHUP) || buff_ready(b)){
+			if(buff_fgets_crlf(b,t,sizeof(t))!=NULL){
+				crlf_to_lf(t);
+				printf("%s",t);
+			}
+			else {
+				if(buff_eof(b)){
+					break;
+				}
 			}
 		}
 	}
+	buff_free(b);
 	close(sock_cl);
 	return 0;
 }
